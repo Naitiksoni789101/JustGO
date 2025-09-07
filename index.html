@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustGO - Travel Smarter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        :root {
+            --dark-navy: #0a0a23;
+            --gold: #FFD700;
+            --blue-highlight: #00BFFF;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #e0e0e0;
+            background-color: var(--dark-navy);
+            background-image: linear-gradient(135deg, #0a0a23, #1a202c, #0a0a23);
+        }
+        .text-gradient {
+            background: linear-gradient(45deg, #e0e0e0, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-gradient {
+            background: linear-gradient(45deg, #111827, #1f2937);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+        .sos-btn {
+            background: linear-gradient(45deg, #EF4444, #DC2626);
+            animation: pulse-red 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        .sos-btn:hover {
+            transform: scale(1.05);
+        }
+        .pulse-light {
+            animation: pulse-light 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+        }
+        @keyframes pulse-light {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+        }
+        .map-glow {
+            box-shadow: 0 0 25px 5px rgba(0, 191, 255, 0.6), 0 0 50px 10px rgba(0, 191, 255, 0.4);
+            transition: transform 0.3s ease;
+        }
+        .map-glow:hover {
+            transform: scale(1.02);
+        }
+        .marker {
+            width: 20px;
+            height: 20px;
+            background-color: var(--gold);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            animation: pulse-light 1.5s infinite;
+            box-shadow: 0 0 10px var(--gold);
+        }
+        .marker-teammate {
+            background-color: var(--blue-highlight);
+            box-shadow: 0 0 10px var(--blue-highlight);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 min-h-screen">
+    <div id="modal-container" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 p-4" onclick="closeModal()">
+        <div id="modal-content" class="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-lg w-full transform -translate-y-10 transition-transform duration-300 ease-out" onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold text-gradient mb-4" id="modal-title"></h3>
+            <p class="text-gray-300 mb-6" id="modal-body"></p>
+            <button class="bg-slate-700 text-gray-300 py-2 px-6 rounded-lg hover:bg-slate-600 transition-colors" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <nav class="sticky top-0 z-40 bg-slate-950 bg-opacity-80 backdrop-blur-sm shadow-lg border-b border-gray-800 py-4">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white mr-2">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3.114 17.527a4.938 4.938 0 0 1-1.638-1.745c.451-.433.914-.847 1.39-1.22A5.19 5.19 0 0 0 12 16.5c2.31 0 4.463-.98 5.922-2.673l.536-.607.53-.599a.75.75 0 0 1 1.056-.118.75.75 0 0 0 .584-1.242 7.5 7.5 0 0 0-14.887-2.905.75.75 0 0 0 .618 1.258c.323-.195.66-.36.999-.51a1.2 1.2 0 0 1 1.547.458c.372.48.566.97.744 1.45.69 1.942 2.502 3.324 4.545 3.324 1.155 0 2.222-.387 3.093-1.048l.412-.303.41-.303a.75.75 0 0 1 1.056.118.75.75 0 0 0-.584 1.242A7.5 7.5 0 0 0 12 19.5c.801 0 1.58-.094 2.333-.274a.75.75 0 0 0-.19-.441l-2.023-2.288a.75.75 0 0 0-1.127.086c-.523.633-1.107 1.206-1.747 1.71a.75.75 0 0 0-.214 1.018c-.765.8-1.611 1.517-2.529 2.138a4.938 4.938 0 0 1-1.776-1.579.75.75 0 0 0-.82-.24zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z" clip-rule="evenodd" />
+                </svg>
+                <span class="font-bold text-xl sm:text-2xl text-gradient tracking-wide">JustGO</span>
+            </a>
+            <!-- Desktop Nav Links -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#hero" class="text-sm font-medium hover:text-white transition-colors">Home</a>
+                <div class="relative group">
+                    <button class="text-sm font-medium hover:text-white transition-colors flex items-center">Trips <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-t-lg">My Trips</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700">Past Stories</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-b-lg">Trip Planner</a>
+                    </div>
+                </div>
+                <div class="relative group">
+                    <button class="text-sm font-medium hover:text-white transition-colors flex items-center">Safety <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-t-lg">Live Location</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-b-lg">Emergency SOS</a>
+                    </div>
+                </div>
+                <div class="relative group">
+                    <button class="text-sm font-medium hover:text-white transition-colors flex items-center">Settings <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-t-lg">Profile</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 rounded-b-lg">App Settings</a>
+                    </div>
+                </div>
+            </div>
+            <!-- SOS Button -->
+            <div class="hidden md:flex items-center">
+                <button onclick="showSosModal()" class="sos-btn text-white font-bold py-2 px-6 rounded-full uppercase text-sm tracking-wide transition-all duration-300">
+                    Emergency SOS
+                </button>
+            </div>
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" class="text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-900 bg-opacity-90 transition-all duration-300">
+            <a href="#hero" class="block py-3 px-6 text-sm hover:bg-slate-800 transition-colors">Home</a>
+            <div class="relative">
+                <button onclick="toggleMobileDropdown('trips')" class="w-full text-left py-3 px-6 text-sm hover:bg-slate-800 transition-colors flex justify-between items-center">Trips <svg class="w-4 h-4 transition-transform duration-300" id="trips-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                <div id="trips-dropdown" class="hidden pl-8 bg-slate-800">
+                    <a href="#" class="block py-2 px-4 text-xs text-gray-300 hover:bg-slate-700">My Trips</a>
+                    <a href="#" class="block py-2 px-4 text-xs text-gray-300 hover:bg-slate-700">Past Stories</a>
+                    <a href="#" class="block py-2 px-4 text-xs text-gray-300 hover:bg-slate-700">Trip Planner</a>
+                </div>
+            </div>
+            <!-- More mobile dropdowns... -->
+            <button onclick="showSosModal()" class="w-full text-left py-3 px-6 text-sm text-white font-bold bg-red-600 hover:bg-red-700 transition-colors">Emergency SOS</button>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <header id="hero" class="relative overflow-hidden h-screen flex items-center justify-center text-center">
+        <!-- Background Elements -->
+        <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('https://images.unsplash.com/photo-1506542034-7389a964f43c?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');"></div>
+        <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+        
+        <div class="relative z-10 p-6 sm:p-12 max-w-4xl mx-auto rounded-3xl backdrop-blur-sm bg-slate-800 bg-opacity-20 border border-gray-700 shadow-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-white mb-6">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3.114 17.527a4.938 4.938 0 0 1-1.638-1.745c.451-.433.914-.847 1.39-1.22A5.19 5.19 0 0 0 12 16.5c2.31 0 4.463-.98 5.922-2.673l.536-.607.53-.599a.75.75 0 0 1 1.056-.118.75.75 0 0 0 .584-1.242 7.5 7.5 0 0 0-14.887-2.905.75.75 0 0 0 .618 1.258c.323-.195.66-.36.999-.51a1.2 1.2 0 0 1 1.547.458c.372.48.566.97.744 1.45.69 1.942 2.502 3.324 4.545 3.324 1.155 0 2.222-.387 3.093-1.048l.412-.303.41-.303a.75.75 0 0 1 1.056.118.75.75 0 0 0-.584 1.242A7.5 7.5 0 0 0 12 19.5c.801 0 1.58-.094 2.333-.274a.75.75 0 0 0-.19-.441l-2.023-2.288a.75.75 0 0 0-1.127.086c-.523.633-1.107 1.206-1.747 1.71a.75.75 0 0 0-.214 1.018c-.765.8-1.611 1.517-2.529 2.138a4.938 4.938 0 0 1-1.776-1.579.75.75 0 0 0-.82-.24zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z" clip-rule="evenodd" />
+            </svg>
+            <h1 class="text-4xl sm:text-6xl font-extrabold text-gradient mb-4">JustGO – Travel Smarter.</h1>
+            <p class="text-lg sm:text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+                Discover the world with our AI-powered travel platform. Track your location, stay connected with friends, and ensure your safety, all in one seamless experience.
+            </p>
+            <a href="#trip-planner" class="btn-gradient inline-block text-white font-bold py-3 px-8 rounded-full uppercase tracking-wide">
+                Plan Your Trip
+            </a>
+            <div id="userIdDisplay" class="mt-4 text-xs text-gray-500 font-mono"></div>
+        </div>
+    </header>
+
+    <!-- Map & Teammates Section -->
+    <section id="live-location" class="py-20 px-4 sm:px-8 relative overflow-hidden">
+        <div class="container mx-auto">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient text-center mb-8">Track Your Journey</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Map Placeholder -->
+                <div class="relative w-full h-80 sm:h-96 bg-gray-900 rounded-3xl overflow-hidden map-glow">
+                    <div class="absolute inset-0 bg-dots-grid opacity-50 z-0"></div>
+                    <div class="absolute inset-0 flex items-center justify-center p-4 z-10">
+                        <div class="w-full h-full bg-slate-900 rounded-2xl flex items-center justify-center">
+                            <span class="text-gray-600 text-lg font-light">Simulated Map View</span>
+                        </div>
+                    </div>
+                    <!-- User Marker -->
+                    <div id="user-marker" class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 marker z-20"></div>
+                    <!-- Teammate Markers -->
+                    <div id="teammate-markers"></div>
+                </div>
+
+                <!-- Teammates & SOS Controls -->
+                <div class="space-y-8">
+                    <div class="bg-slate-800 p-8 rounded-3xl shadow-lg border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-4 text-white">Travel Mate Tracker</h3>
+                        <p class="text-sm text-gray-400 mb-6">See your teammates on the map and stay connected.</p>
+                        <div id="teammates-list" class="space-y-4 max-h-48 overflow-y-auto">
+                            <p class="text-gray-500 text-sm">No teammates added yet.</p>
+                        </div>
+                        <div class="mt-6 flex items-center space-x-2">
+                            <input type="text" id="teammate-input" placeholder="Enter teammate user ID" class="flex-grow bg-slate-900 text-white placeholder-gray-500 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="addTeammate()" class="btn-gradient text-white py-2 px-6 rounded-lg font-medium transition-transform">Add</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-800 p-8 rounded-3xl shadow-lg border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-4 text-white">Emergency SOS</h3>
+                        <p class="text-sm text-gray-400 mb-6">Alert your saved contacts with your live location.</p>
+                        <div id="contacts-list" class="space-y-2 mb-4 max-h-32 overflow-y-auto">
+                            <p class="text-gray-500 text-sm">No SOS contacts saved.</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="contact-input" placeholder="Enter contact name" class="flex-grow bg-slate-900 text-white placeholder-gray-500 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="addContact()" class="btn-gradient text-white py-2 px-6 rounded-lg font-medium transition-transform">Add</button>
+                        </div>
+                        <button onclick="showSosModal()" class="sos-btn w-full mt-6 text-white font-bold py-3 px-8 rounded-full uppercase text-sm tracking-wide transition-all duration-300">
+                            Send SOS
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trip Planner Section -->
+    <section id="trip-planner" class="py-20 px-4 sm:px-8">
+        <div class="container mx-auto max-w-4xl">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient text-center mb-8">Make Your Trip</h2>
+            <div class="bg-slate-800 p-8 rounded-3xl shadow-lg border border-gray-700">
+                <form id="trip-form" class="space-y-6">
+                    <div>
+                        <label for="trip-destination" class="block text-sm font-medium text-gray-300">Destination</label>
+                        <input type="text" id="trip-destination" class="mt-1 block w-full bg-slate-900 rounded-md shadow-sm border-gray-700 text-white px-4 py-2 focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Tokyo, Japan" required>
+                    </div>
+                    <div>
+                        <label for="trip-duration" class="block text-sm font-medium text-gray-300">Trip Duration (days)</label>
+                        <input type="number" id="trip-duration" min="1" class="mt-1 block w-full bg-slate-900 rounded-md shadow-sm border-gray-700 text-white px-4 py-2 focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., 7" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Travel Mode</label>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="travel-mode" value="flight" class="form-radio text-blue-500 bg-gray-900 border-gray-700 focus:ring-blue-500">
+                                <span class="ml-2 text-gray-300">Flight</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="travel-mode" value="train" class="form-radio text-blue-500 bg-gray-900 border-gray-700 focus:ring-blue-500">
+                                <span class="ml-2 text-gray-300">Train</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="travel-mode" value="bus" class="form-radio text-blue-500 bg-gray-900 border-gray-700 focus:ring-blue-500">
+                                <span class="ml-2 text-gray-300">Bus</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="travel-mode" value="car" class="form-radio text-blue-500 bg-gray-900 border-gray-700 focus:ring-blue-500">
+                                <span class="ml-2 text-gray-300">Car</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="offline-mode" type="checkbox" class="h-4 w-4 text-blue-500 bg-gray-900 border-gray-700 rounded focus:ring-blue-500">
+                        <label for="offline-mode" class="ml-2 block text-sm text-gray-300">Enable offline mode</label>
+                    </div>
+                    <button type="submit" class="btn-gradient w-full text-white font-bold py-3 px-8 rounded-lg uppercase tracking-wide">
+                        Create Trip
+                    </button>
+                </form>
+                <div id="trip-confirmation-message" class="hidden mt-6 text-center text-green-400 font-semibold"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Story Section -->
+    <section id="ai-story" class="py-20 px-4 sm:px-8">
+        <div class="container mx-auto max-w-4xl">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient text-center mb-8">Your Travel Story</h2>
+            <div class="bg-slate-800 p-8 rounded-3xl shadow-lg border border-gray-700">
+                <p class="text-sm text-gray-400 mb-6 text-center">AI-generated travel stories at the end of your trip.</p>
+                <div id="story-content" class="min-h-[200px] bg-slate-900 p-6 rounded-xl border border-gray-700">
+                    <p class="text-gray-300 text-base leading-relaxed" id="story-text">
+                        Your story will appear here once your trip is complete. Start your adventure now!
+                    </p>
+                </div>
+                <button onclick="generateAITravelStory()" class="btn-gradient w-full mt-6 text-white font-bold py-3 px-8 rounded-lg uppercase tracking-wide">
+                    Generate My Story
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-8 text-center text-gray-500 text-sm">
+        &copy; 2024 JustGO. All rights reserved.
+    </footer>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment. DO NOT change these.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let userId = null;
+
+        // Function to initialize Firebase and authenticate
+        const initializeFirebase = async () => {
+            if (!firebaseConfig) {
+                showModal('Firebase Error', 'Firebase config not found. The application will not function correctly.');
+                console.error("Firebase config is missing.");
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Sign in with the provided custom token or anonymously
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase auth error:", error);
+                showModal('Authentication Failed', 'Unable to authenticate with Firebase. Data may not be saved.');
+            }
+        };
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`;
+                setupListeners();
+            } else {
+                console.log("User is signed out.");
+                userId = crypto.randomUUID();
+                document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId} (Anonymous)`;
+                // For anonymous users, we don't listen to Firestore
+            }
+        });
+
+        // Setup real-time listeners for data
+        const setupListeners = () => {
+            if (!db || !userId) return;
+
+            const userDataRef = doc(db, `artifacts/${appId}/users/${userId}/justgo_data/userData`);
+
+            onSnapshot(userDataRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.teammates) {
+                        displayTeammates(data.teammates);
+                        placeTeammateMarkers(data.teammates);
+                    }
+                    if (data.contacts) {
+                        displayContacts(data.contacts);
+                    }
+                }
+            }, (error) => {
+                console.error("Firestore listen error:", error);
+                showModal('Data Error', 'Failed to retrieve real-time data. Check your connection.');
+            });
+        };
+
+        window.addTeammate = async () => {
+            if (!db || !userId) {
+                showModal('Login Required', 'Please wait for authentication to complete.');
+                return;
+            }
+            const teammateId = document.getElementById('teammate-input').value.trim();
+            if (teammateId === '') {
+                showModal('Input Required', 'Please enter a valid teammate ID.');
+                return;
+            }
+            const userDataRef = doc(db, `artifacts/${appId}/users/${userId}/justgo_data/userData`);
+            const docSnap = await getDoc(userDataRef);
+            let teammates = docSnap.exists() && docSnap.data().teammates ? docSnap.data().teammates : [];
+            if (!teammates.includes(teammateId)) {
+                teammates.push(teammateId);
+                await setDoc(userDataRef, { teammates }, { merge: true });
+                document.getElementById('teammate-input').value = '';
+                showModal('Success', 'Teammate added successfully!');
+            } else {
+                showModal('Duplicate Entry', 'This teammate is already in your list.');
+            }
+        };
+
+        const displayTeammates = (teammates) => {
+            const list = document.getElementById('teammates-list');
+            list.innerHTML = '';
+            if (teammates.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-sm">No teammates added yet.</p>';
+            } else {
+                teammates.forEach(id => {
+                    const el = document.createElement('div');
+                    el.className = 'flex items-center justify-between p-2 bg-slate-900 rounded-lg';
+                    el.innerHTML = `<span class="text-sm font-mono text-gray-300 truncate">${id}</span><button onclick="removeTeammate('${id}')" class="text-red-500 hover:text-red-400 ml-2">Remove</button>`;
+                    list.appendChild(el);
+                });
+            }
+        };
+        
+        window.removeTeammate = async (idToRemove) => {
+            if (!db || !userId) {
+                showModal('Error', 'Unable to perform this action. Please try again later.');
+                return;
+            }
+            const userDataRef = doc(db, `artifacts/${appId}/users/${userId}/justgo_data/userData`);
+            const docSnap = await getDoc(userDataRef);
+            if (docSnap.exists()) {
+                let teammates = docSnap.data().teammates || [];
+                const newTeammates = teammates.filter(id => id !== idToRemove);
+                await setDoc(userDataRef, { teammates: newTeammates }, { merge: true });
+                showModal('Success', 'Teammate removed successfully.');
+            }
+        };
+
+        window.addContact = async () => {
+            if (!db || !userId) {
+                showModal('Login Required', 'Please wait for authentication to complete.');
+                return;
+            }
+            const contactName = document.getElementById('contact-input').value.trim();
+            if (contactName === '') {
+                showModal('Input Required', 'Please enter a contact name.');
+                return;
+            }
+            const userDataRef = doc(db, `artifacts/${appId}/users/${userId}/justgo_data/userData`);
+            const docSnap = await getDoc(userDataRef);
+            let contacts = docSnap.exists() && docSnap.data().contacts ? docSnap.data().contacts : [];
+            if (!contacts.includes(contactName)) {
+                contacts.push(contactName);
+                await setDoc(userDataRef, { contacts }, { merge: true });
+                document.getElementById('contact-input').value = '';
+                showModal('Success', 'Contact added successfully!');
+            } else {
+                showModal('Duplicate Entry', 'This contact is already in your list.');
+            }
+        };
+
+        const displayContacts = (contacts) => {
+            const list = document.getElementById('contacts-list');
+            list.innerHTML = '';
+            if (contacts.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-sm">No SOS contacts saved.</p>';
+            } else {
+                contacts.forEach(contact => {
+                    const el = document.createElement('div');
+                    el.className = 'flex items-center justify-between p-1 bg-slate-900 rounded-lg';
+                    el.innerHTML = `<span class="text-sm font-mono text-gray-300 truncate">${contact}</span><button onclick="removeContact('${contact}')" class="text-red-500 hover:text-red-400 ml-2">Remove</button>`;
+                    list.appendChild(el);
+                });
+            }
+        };
+
+        window.removeContact = async (nameToRemove) => {
+            if (!db || !userId) {
+                showModal('Error', 'Unable to perform this action. Please try again later.');
+                return;
+            }
+            const userDataRef = doc(db, `artifacts/${appId}/users/${userId}/justgo_data/userData`);
+            const docSnap = await getDoc(userDataRef);
+            if (docSnap.exists()) {
+                let contacts = docSnap.data().contacts || [];
+                const newContacts = contacts.filter(name => name !== nameToRemove);
+                await setDoc(userDataRef, { contacts: newContacts }, { merge: true });
+                showModal('Success', 'Contact removed successfully.');
+            }
+        };
+        
+        window.showSosModal = () => {
+            showModal('Emergency SOS', 'Sending your live location to your saved contacts. Hold tight, help is on the way!');
+        };
+        
+        window.showModal = (title, body) => {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').textContent = body;
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('flex');
+            setTimeout(() => {
+                modalContent.style.transform = 'translateY(0)';
+            }, 10);
+        };
+        
+        window.closeModal = () => {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            modalContent.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                modalContainer.classList.remove('flex');
+                modalContainer.classList.add('hidden');
+            }, 300);
+        };
+
+        const placeTeammateMarkers = (teammates) => {
+            const markerContainer = document.getElementById('teammate-markers');
+            markerContainer.innerHTML = ''; // Clear existing markers
+            teammates.forEach((_, index) => {
+                const marker = document.createElement('div');
+                // Use a random position for a visual effect
+                const top = 20 + Math.random() * 60;
+                const left = 20 + Math.random() * 60;
+                marker.className = `absolute top-[${top}%] left-[${left}%] -translate-x-1/2 -translate-y-1/2 marker marker-teammate z-20`;
+                marker.style.top = `${top}%`;
+                marker.style.left = `${left}%`;
+                markerContainer.appendChild(marker);
+            });
+        };
+
+        document.getElementById('trip-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const destination = document.getElementById('trip-destination').value;
+            const duration = document.getElementById('trip-duration').value;
+            const travelMode = document.querySelector('input[name="travel-mode"]:checked')?.value || 'Not specified';
+            const offline = document.getElementById('offline-mode').checked;
+
+            const message = `Trip to ${destination} for ${duration} days created successfully! Travel Mode: ${travelMode}. Offline Mode: ${offline ? 'Enabled' : 'Disabled'}.`;
+            const confirmationMessage = document.getElementById('trip-confirmation-message');
+            confirmationMessage.textContent = message;
+            confirmationMessage.classList.remove('hidden');
+            setTimeout(() => confirmationMessage.classList.add('hidden'), 5000);
+        });
+
+        window.generateAITravelStory = () => {
+            const stories = [
+                "The crisp mountain air of the Himalayas filled our lungs as we reached base camp. Every step was a challenge, but the reward—a sunrise painting the peaks in hues of gold and rose—made it all worth it. Our team, fueled by laughter and shared goals, captured this moment not just in photos, but in our hearts. This trip wasn't just about reaching a destination, but about forging a new connection.",
+                "Sun-kissed streets of Rome called our names. We spent our days navigating ancient ruins and our nights savoring gelato, the city's history whispering with every cobblestone. We found a small, hidden cafe and made it our own, sharing stories and creating memories that will last a lifetime. This journey felt less like a vacation and more like a homecoming.",
+                "Our journey through the Amazon was a symphony of sounds and sights. The lush jungle hummed with life, a vibrant green tapestry stretching as far as the eye could see. We learned to track unique species and navigate by the stars. At night, gathered around a small fire, we shared tales of the day's discoveries. It was a trip that reminded us of the power and beauty of the untamed world."
+            ];
+            const storyText = document.getElementById('story-text');
+            const randomIndex = Math.floor(Math.random() * stories.length);
+            storyText.textContent = stories[randomIndex];
+            showModal('AI Story Generated', 'Your personalized travel story is ready to be shared with friends and family.');
+        };
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        window.toggleMobileDropdown = (id) => {
+            const dropdown = document.getElementById(`${id}-dropdown`);
+            const arrow = document.getElementById(`${id}-arrow`);
+            dropdown.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        };
+
+        initializeFirebase();
+    </script>
+</body>
+</html>
